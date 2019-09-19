@@ -1,0 +1,18 @@
+{
+  "name": "fatum-node",
+  "version": "0.0.1",
+  "description": "A Node port of the Fatum algorithms",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "author": "Michael Dietz",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.19.0",
+    "fastify": "^2.8.0"
+  },
+  "devDependencies": {
+    "jest": "^24.9.0"
+  }
+}
