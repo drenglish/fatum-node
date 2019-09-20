@@ -13,7 +13,7 @@ async function guaranteeBuffer () {
           length: 1024,
           type: 'uint8'
         },
-        timeout: 1
+        timeout: 2000
       })
       rands = rands.concat(qrnd.data.data)
       console.log(`fetch complete`)

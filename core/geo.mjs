@@ -10,8 +10,8 @@ function getDistance ( center, target ) {
   const {lat: lat1, lon: lon1} = target
   const dLon = (lon1 - lon0) * Math.PI/180,
         dLat = (lat1 - lat0) * Math.PI/180
-  const a = (Math.sin(dLat / 2) * Math.sin(dLat / 2)) + Math.cos(lat0 * Math.PI / 180) * Math.cos(lat1 * Math.PI / 180) * (Math.sin(dLon / 2) * Math.sin(dLon / 2))
-  return (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * EARTH_RADIUS|0)
+  const a = (Math.sin(dLat / 2) * Math.sin(dLat / 2)) + Math.cos(lat0 * Math.PI/180) * Math.cos(lat1 * Math.PI/180) * (Math.sin(dLon/2) * Math.sin(dLon/2))
+  return (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * EARTH_RADIUS)|0
 }
 
 function getAzimuth ( center, target ) {
@@ -20,7 +20,7 @@ function getAzimuth ( center, target ) {
   const dLon = (lon1 - lon0) * RADN,
         dLat = (lat1 - lat0) * RADN
 
-  let az = (180 * Math.atan( (dLon * Math.cos(lat0 * Math.PI/180))/dLat )) / Math.PI
+  let az = (180 * Math.atan( (dLon * Math.cos(lat0 * Math.PI/180)) / dLat )) / Math.PI
   az = az < 0 ? az + 360 : az
 
   const rd = getDistance(center, target)
@@ -60,10 +60,9 @@ async function fillPointsBag ( center, radius ) {
   size = size < MIN_P ? MIN_P : size
   const it = takeCoordinate(center, radius)
 
-  let coord
   while (bag.size < size) {
-    coord = await it.next()
-    let { lat: plat, lon: plon } = coord.value
+    const coord = await it.next()
+    const { lat: plat, lon: plon } = coord.value
     bag.add(`${plat}:${plon}`)
   }
   return Array.from(bag)
@@ -87,9 +86,10 @@ function getStats (attractor, pointsBag, radius) {
     testrad += minrad // expand the test radius till we nab at least 10 random points
   }
 
+  // average radius of selected points
   const arad = testpts
-    .slice(0, 10)
-    .reduce( (a, d) => a + d, 0) / 10
+    .reduce( (a, d) => a + d, 0) / testpts.length
+  // number of points in full set within radius
   const nrad = sorted
     .filter( d => d <= arad)
     .length
@@ -136,19 +136,18 @@ export async function getVoid ( center, radius ) {
     center = mirCoord // reset "center" for next iteration
   }
   const stats = getStats(mirCoord, fullBag, radius)
-  return { ...stats, ...{ power: -1 / stats.power } }
+  return { ...stats, ...{ power: 1 / stats.power } }
 }
 
 export async function* takeCoordinate ( { lat, lon }, radius ) {
-  const latBase = lat + radius / (-1 * RADN)
-  const dLat = (lat + radius / RADN - latBase) * 1000000
+  const latBase = lat + radius * -1 / RADN
+  const dLat = ((lat + radius / RADN) - latBase) * 1000000
   const lonBase = lon + radius * Math.sin(270 * Math.PI/180) / Math.cos(lat * Math.PI/180) / RADN
   const dLon = ((lon + radius * Math.sin(90 * Math.PI/180) / Math.cos(lat * Math.PI/180) / RADN) - lonBase) * 1000000
 
-  let rLat, rLon
   while (true) {
-    rLat = await getRand(dLat)
-    rLon = await getRand(dLon)
+    let rLat = await getRand(dLat)
+    let rLon = await getRand(dLon)
     rLat = latBase + rLat/1000000
     rLon = lonBase + rLon/1000000
     if (getDistance({lat, lon}, {lat: rLat, lon: rLon}) <= radius) {
